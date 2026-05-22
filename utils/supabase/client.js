@@ -4,8 +4,12 @@
 const SUPABASE_URL = 'https://qozrxkfviuochlhpcnvk.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_9CGHy2lfuXlQAkoR_azH4g_IahNSwWa';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true }
-});
-
-window.supabaseClient = supabase;
+try {
+  const _supabaseInstance = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true }
+  });
+  window.supabaseClient = _supabaseInstance;
+  console.log('[client.js] supabaseClient 초기화 성공:', typeof window.supabaseClient);
+} catch (e) {
+  console.error('[client.js] supabaseClient 초기화 실패:', e.message, e);
+}
