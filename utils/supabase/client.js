@@ -4,6 +4,8 @@
 const SUPABASE_URL = 'https://qozrxkfviuochlhpcnvk.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_9CGHy2lfuXlQAkoR_azH4g_IahNSwWa';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true }
+});
 
 window.supabaseClient = supabase;
