@@ -15,7 +15,15 @@ const supabaseAuth = {
   async signOut() {
     const { error } = await window.supabaseClient.auth.signOut();
     return { error };
-  }
+  },
+
+  async signInWithGoogle() {
+    const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
+    return { data, error };
+  },
 };
 
 window.supabaseAuth = supabaseAuth;
