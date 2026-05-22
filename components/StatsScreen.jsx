@@ -27,7 +27,7 @@ function Donut({ items, total }) {
   );
 }
 
-function StatsScreen({ todos = [], mobile }) {
+function StatsScreen({ todos = [], mobile, onNavigate, user }) {
   const now = new Date();
 
   // ── KPI 계산 ──────────────────────────────────────────────────────
@@ -291,7 +291,7 @@ function StatsScreen({ todos = [], mobile }) {
 
   return (
     <div className="todo-app" style={{ display: "grid", gridTemplateColumns: "248px 1fr", height: "100%" }}>
-      <TodoSidebar current="stats" todos={todos} selectedCategory="all" onSelectCategory={() => {}} onNewTodo={() => {}} user={null} />
+      <TodoSidebar current="all" todos={todos} selectedCategory="all" onSelectCategory={() => {}} onNewTodo={() => {}} user={user} onNavigate={onNavigate} currentScreen="stats" />
       {statsContent}
     </div>
   );

@@ -23,7 +23,7 @@ function buildCalCells(year, month) {
   return cells.map((c, i) => ({ ...c, col: i % 7 }));
 }
 
-function CalendarScreen({ todos = [], mobile }) {
+function CalendarScreen({ todos = [], mobile, onNavigate, user }) {
   const now = new Date();
   const [currentYear,  setCurrentYear]  = React.useState(now.getFullYear());
   const [currentMonth, setCurrentMonth] = React.useState(now.getMonth() + 1); // 1-indexed
@@ -163,7 +163,7 @@ function CalendarScreen({ todos = [], mobile }) {
 
   return (
     <div className="todo-app" style={{ display: "grid", gridTemplateColumns: "248px 1fr", height: "100%", position: "relative" }}>
-      <TodoSidebar current="cal" todos={todos} selectedCategory="all" onSelectCategory={() => {}} onNewTodo={() => {}} user={null} />
+      <TodoSidebar current="all" todos={todos} selectedCategory="all" onSelectCategory={() => {}} onNewTodo={() => {}} user={user} onNavigate={onNavigate} currentScreen="calendar" />
       {calBody}
     </div>
   );

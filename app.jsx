@@ -1,4 +1,4 @@
-/* global React, ReactDOM, DesignCanvas, DCSection, DCArtboard,
+/* global React, ReactDOM,
    LoginScreen, MainScreen, CalendarScreen, StatsScreen, MobileScreen,
    TweaksPanel, useTweaks, TweakSection, TweakColor, TweakRadio,
    supabaseClient, supabaseAuth, useTodos */
@@ -15,25 +15,17 @@ const ACCENT_HEXES = Object.keys(ACCENT_OPTIONS);
 
 function applyAccent(hex) {
   const opt = ACCENT_OPTIONS[hex] || ACCENT_OPTIONS[ACCENT_HEXES[0]];
-  const v = ACCENT_OPTIONS[hex] ? hex : ACCENT_HEXES[0];
+  const v   = ACCENT_OPTIONS[hex] ? hex : ACCENT_HEXES[0];
   document.documentElement.style.setProperty("--accent", v);
   document.documentElement.style.setProperty("--color-accent-soft", opt.soft);
   document.documentElement.style.setProperty("--color-accent-500", v);
 }
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
-  "theme":  "light",
-  "accent": "#1571F3",
+  "theme":   "light",
+  "accent":  "#1571F3",
   "density": "comfortable"
 }/*EDITMODE-END*/;
-
-function ArtboardWrap({ theme, children, style }) {
-  return (
-    <div data-theme={theme} style={{ width: "100%", height: "100%", ...style }}>
-      {children}
-    </div>
-  );
-}
 
 // ── 로딩 화면 ─────────────────────────────────────────────────────────
 function LoadingScreen() {
@@ -78,8 +70,8 @@ function App() {
   const [user, setUser]               = React.useState(null);
   const [authLoading, setAuthLoading] = React.useState(true);
   const [isOffline, setIsOffline]     = React.useState(!navigator.onLine);
+  const [screen, setScreen]           = React.useState("main"); // "main" | "calendar" | "stats"
 
-  // accent / density
   React.useEffect(() => { applyAccent(tweaks.accent); }, [tweaks.accent]);
   React.useEffect(() => {
     document.documentElement.dataset.density = tweaks.density;
@@ -109,16 +101,14 @@ function App() {
     };
   }, []);
 
-  // useTodos는 hooks 규칙에 따라 무조건 최상위에서 호출
-  const todosData = useTodos(user);
+  // useTodos — hooks 규칙: 항상 최상위 호출
   const {
     todos, refetch,
     addTodo, updateTodo, deleteTodo,
     toggleDone, toggleStarred,
     addSubtask, toggleSubtaskDone, deleteSubtask,
-  } = todosData;
+  } = useTodos(user);
 
-  // refetch를 ref에 저장 (online 핸들러에서 최신 함수 참조)
   const refetchRef = React.useRef(refetch);
   React.useEffect(() => { refetchRef.current = refetch; }, [refetch]);
 
@@ -127,6 +117,7 @@ function App() {
   // ── 렌더링 ──────────────────────────────────────────────────────────
   if (authLoading) return <LoadingScreen />;
 
+  // 로그인 전
   if (!user) {
     return (
       <div data-theme={theme} style={{ height: "100%" }}>
@@ -135,7 +126,7 @@ function App() {
     );
   }
 
-  // 공통 todo props
+  // 로그인 후 — 실제 앱 화면
   const todoProps = {
     todos, addTodo, updateTodo, deleteTodo,
     toggleDone, toggleStarred,
@@ -144,46 +135,22 @@ function App() {
   };
 
   return (
-    <>
+    <div data-theme={theme} style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       {isOffline && <OfflineBanner />}
 
-      <DesignCanvas>
-        <DCSection id="main" title="02 · 메인 — 3단 레이아웃" subtitle="왼쪽 네비 · 가운데 리스트 · 오른쪽 상세">
-          <DCArtboard id="main-desktop" label="데스크톱 · 1440×900" width={1440} height={900}>
-            <ArtboardWrap theme={theme}>
-              <MainScreen {...todoProps} />
-            </ArtboardWrap>
-          </DCArtboard>
+      <div style={{ flex: 1, overflow: "hidden" }}>
+        {screen === "main" && (
+          <MainScreen {...todoProps} onNavigate={setScreen} />
+        )}
+        {screen === "calendar" && (
+          <CalendarScreen todos={todos} user={user} onNavigate={setScreen} />
+        )}
+        {screen === "stats" && (
+          <StatsScreen todos={todos} user={user} onNavigate={setScreen} />
+        )}
+      </div>
 
-          <DCArtboard id="mobile" label="모바일 · 390×844" width={390} height={844}>
-            <ArtboardWrap theme={theme}>
-              <MobileScreen
-                todos={todos}
-                addTodo={addTodo}
-                toggleDone={toggleDone}
-                deleteTodo={deleteTodo}
-              />
-            </ArtboardWrap>
-          </DCArtboard>
-        </DCSection>
-
-        <DCSection id="calendar" title="03 · 캘린더 뷰" subtitle="월간 캘린더 — 마감일 기준">
-          <DCArtboard id="calendar-desktop" label="캘린더 · 1440×900" width={1440} height={900}>
-            <ArtboardWrap theme={theme}>
-              <CalendarScreen todos={todos} />
-            </ArtboardWrap>
-          </DCArtboard>
-        </DCSection>
-
-        <DCSection id="stats" title="04 · 통계 뷰" subtitle="완료율 KPI · 카테고리 비중 · 12주 활동 히트맵">
-          <DCArtboard id="stats-desktop" label="통계 · 1440×1000" width={1440} height={1000}>
-            <ArtboardWrap theme={theme}>
-              <StatsScreen todos={todos} />
-            </ArtboardWrap>
-          </DCArtboard>
-        </DCSection>
-      </DesignCanvas>
-
+      {/* 테마 조절 패널 (우하단) */}
       <TweaksPanel title="Tweaks">
         <TweakSection label="테마">
           <TweakRadio
@@ -196,7 +163,6 @@ function App() {
             ]}
           />
         </TweakSection>
-
         <TweakSection label="강조 색상">
           <TweakColor
             label="Accent"
@@ -205,7 +171,6 @@ function App() {
             options={ACCENT_HEXES}
           />
         </TweakSection>
-
         <TweakSection label="밀도">
           <TweakRadio
             label="행 간격"
@@ -218,11 +183,11 @@ function App() {
           />
         </TweakSection>
       </TweaksPanel>
-    </>
+    </div>
   );
 }
 
-// 로딩 스피너 키프레임 (한 번만 삽입)
+// 로딩 스피너 키프레임
 if (!document.getElementById("cc-spin-style")) {
   const s = document.createElement("style");
   s.id = "cc-spin-style";

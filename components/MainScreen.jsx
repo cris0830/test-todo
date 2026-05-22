@@ -5,7 +5,7 @@
    IconStar, IconLink, IconRepeat, IconTag */
 
 // ── 사이드바 ──────────────────────────────────────────────────────────
-function TodoSidebar({ todos, selectedCategory, onSelectCategory, onNewTodo, user }) {
+function TodoSidebar({ todos, selectedCategory, onSelectCategory, onNewTodo, user, onNavigate, currentScreen }) {
   const done    = todos.filter(t => t.done).length;
   const overdue = todos.filter(t => computeDueState(t.due_date) === "overdue" && !t.done).length;
   const today   = todos.filter(t => computeDueState(t.due_date) === "today"   && !t.done).length;
@@ -69,6 +69,20 @@ function TodoSidebar({ todos, selectedCategory, onSelectCategory, onNewTodo, use
             {catCounts[c.id] > 0 && <span className="count">{catCounts[c.id]}</span>}
           </a>
         ))}
+      </nav>
+
+      <div className="sb-section">기타</div>
+      <nav className="sb-nav">
+        <a href="#" className="sb-item"
+           aria-current={currentScreen === "calendar" ? "page" : undefined}
+           onClick={e => { e.preventDefault(); onNavigate && onNavigate("calendar"); }}>
+          <IconCalendar /><span>캘린더</span>
+        </a>
+        <a href="#" className="sb-item"
+           aria-current={currentScreen === "stats" ? "page" : undefined}
+           onClick={e => { e.preventDefault(); onNavigate && onNavigate("stats"); }}>
+          <IconStats /><span>통계</span>
+        </a>
       </nav>
 
       <div className="sb-foot">
@@ -518,7 +532,7 @@ function DetailPane({ task, updateTodo, deleteTodo, addSubtask, toggleSubtaskDon
 }
 
 // ── 메인 화면 ─────────────────────────────────────────────────────────
-function MainScreen({ todos, addTodo, updateTodo, deleteTodo, toggleDone, toggleStarred, addSubtask, toggleSubtaskDone, deleteSubtask, user }) {
+function MainScreen({ todos, addTodo, updateTodo, deleteTodo, toggleDone, toggleStarred, addSubtask, toggleSubtaskDone, deleteSubtask, user, onNavigate }) {
   const [selectedId, setSelectedId]         = React.useState(null);
   const [selectedCategory, setSelectedCategory] = React.useState("all");
   const [showAddForm, setShowAddForm]        = React.useState(false);
@@ -533,6 +547,8 @@ function MainScreen({ todos, addTodo, updateTodo, deleteTodo, toggleDone, toggle
         onSelectCategory={setSelectedCategory}
         onNewTodo={() => setShowAddForm(true)}
         user={user}
+        onNavigate={onNavigate}
+        currentScreen="main"
       />
       <ListPane
         todos={todos}
