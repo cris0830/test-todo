@@ -96,7 +96,10 @@ function TodoSidebar({ todos, selectedCategory, onSelectCategory, onNewTodo, use
         <button
           className="iconbtn"
           title="로그아웃"
-          onClick={() => window.supabaseAuth.signOut()}
+          onClick={async () => {
+            try { await window.supabaseAuth.signOut(); }
+            catch (e) { console.error("signOut error:", e); }
+          }}
           style={{ flexShrink: 0 }}
         >
           <IconSettings />
@@ -264,26 +267,31 @@ function ListPane({ todos, selectedCategory, selectedId, onSelect, onToggleDone,
       }
     }
 
-    // 그룹화 (done=true는 항상 마지막)
-    const overdue = items.filter(t => computeDueState(t.due_date) === "overdue" && !t.done);
-    const today   = items.filter(t => computeDueState(t.due_date) === "today"   && !t.done);
-    const soon    = items.filter(t => computeDueState(t.due_date) === "soon"    && !t.done);
-    const future  = items.filter(t => computeDueState(t.due_date) === "future"  && !t.done);
-    const noDue   = items.filter(t => !t.due_date && !t.done);
-    const done    = items.filter(t => t.done);
+    // 단일 패스 그룹화 — computeDueState를 항목당 1회만 호출 (기존 5회 → 1회)
+    const buckets = { overdue: [], today: [], soon: [], future: [], noDue: [], done: [] };
+    items.forEach(t => {
+      if (t.done) { buckets.done.push(t); return; }
+      const state = computeDueState(t.due_date);
+      if (state === "overdue")     buckets.overdue.push(t);
+      else if (state === "today")  buckets.today.push(t);
+      else if (state === "soon")   buckets.soon.push(t);
+      else if (state === "future") buckets.future.push(t);
+      else                         buckets.noDue.push(t);
+    });
 
     const groups = [];
-    if (overdue.length) groups.push({ id: "overdue", label: `지연 · ${overdue.length}`, items: overdue });
-    if (today.length)   groups.push({ id: "today",   label: `오늘 · ${today.length}`,   items: today   });
-    if (soon.length)    groups.push({ id: "soon",    label: `예정 · ${soon.length}`,    items: soon    });
-    if (future.length)  groups.push({ id: "future",  label: `이후 · ${future.length}`,  items: future  });
-    if (noDue.length)   groups.push({ id: "noDue",   label: `기한 없음 · ${noDue.length}`, items: noDue });
-    if (done.length)    groups.push({ id: "done",    label: `완료 · ${done.length}`,    items: done    });
+    if (buckets.overdue.length) groups.push({ id: "overdue", label: `지연 · ${buckets.overdue.length}`, items: buckets.overdue });
+    if (buckets.today.length)   groups.push({ id: "today",   label: `오늘 · ${buckets.today.length}`,   items: buckets.today   });
+    if (buckets.soon.length)    groups.push({ id: "soon",    label: `예정 · ${buckets.soon.length}`,    items: buckets.soon    });
+    if (buckets.future.length)  groups.push({ id: "future",  label: `이후 · ${buckets.future.length}`,  items: buckets.future  });
+    if (buckets.noDue.length)   groups.push({ id: "noDue",   label: `기한 없음 · ${buckets.noDue.length}`, items: buckets.noDue });
+    if (buckets.done.length)    groups.push({ id: "done",    label: `완료 · ${buckets.done.length}`,    items: buckets.done    });
     return groups;
   }
 
   const groups = filterAndGroup(todos);
-  const todayCount = todos.filter(t => computeDueState(t.due_date) === "today" && !t.done).length;
+  // groups에서 today 버킷을 재사용 — 별도 순회 제거
+  const todayCount = (groups.find(g => g.id === "today")?.items.length) ?? 0;
   const now = new Date();
   const dateLabel = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,"0")}.${String(now.getDate()).padStart(2,"0")}`;
   const dayNames = ["일","월","화","수","목","금","토"];

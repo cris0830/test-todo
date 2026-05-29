@@ -41,9 +41,11 @@ function formatDueLabel(due_date) {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const dueDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const diff = Math.round((dueDay - today) / 86400000);
+  // UTC 기준으로 시간 유무 판단: date-only 값("YYYY-MM-DD")은 UTC 자정으로 파싱됨
+  // 로컬 getHours()를 쓰면 KST(UTC+9)에서 항상 9시로 인식되는 버그가 생김
+  const hasTime = d.getUTCHours() !== 0 || d.getUTCMinutes() !== 0;
   const hh = d.getHours();
   const mm = String(d.getMinutes()).padStart(2, "0");
-  const hasTime = hh !== 0 || d.getMinutes() !== 0;
   const timeStr = hasTime ? ` ${hh}:${mm}` : "";
   if (diff === 0) return `오늘${timeStr}`;
   if (diff === 1) return `내일${timeStr}`;
@@ -109,15 +111,14 @@ function useTodos(user) {
 
   const updateTodo = React.useCallback(async (id, changes) => {
     const patch = { ...changes, updated_at: new Date().toISOString() };
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("todos")
       .update(patch)
-      .eq("id", id)
-      .select("*, subtasks(*)")
-      .single();
+      .eq("id", id);
     if (error) { console.error("updateTodo error:", error); return null; }
-    setTodos(prev => prev.map(t => t.id === id ? data : t));
-    return data;
+    // 로컬 상태만 병합 — subtasks는 건드리지 않음 (불필요한 JOIN 방지)
+    setTodos(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t));
+    return id;
   }, []);
 
   const deleteTodo = React.useCallback(async (id) => {

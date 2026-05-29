@@ -17,6 +17,9 @@ function LoginScreen() {
       // 성공 시 브라우저가 Google 인증 페이지로 이동함
     } catch (err) {
       setError(window.supabaseErrors.getKoreanError(err));
+    } finally {
+      // 리디렉션이 일어나면 컴포넌트가 언마운트되어 이 호출은 무시됨
+      // 팝업 차단 / 에러 반환 시 버튼이 영구 비활성화되는 것을 방지
       setGoogleLoading(false);
     }
   }

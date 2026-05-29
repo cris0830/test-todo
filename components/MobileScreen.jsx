@@ -84,14 +84,19 @@ function MobileScreen({ todos = [], addTodo, toggleDone, deleteTodo }) {
   const dateLabel = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,"0")}.${String(now.getDate()).padStart(2,"0")}`;
   const todayLabel = `${now.getMonth()+1}월 ${now.getDate()}일 ${days[now.getDay()]}요일`;
 
-  // 탭별 필터
-  const tabCounts = {
-    today:   todos.filter(t => computeDueState(t.due_date) === "today"   && !t.done).length,
-    soon:    todos.filter(t => computeDueState(t.due_date) === "soon"    && !t.done).length,
-    overdue: todos.filter(t => computeDueState(t.due_date) === "overdue" && !t.done).length,
-    inbox:   todos.filter(t => !t.category).length,
-    done:    todos.filter(t => t.done).length,
-  };
+  // 탭별 카운트 — todos가 바뀔 때만 재계산 (단일 패스)
+  const tabCounts = React.useMemo(() => {
+    const counts = { today: 0, soon: 0, overdue: 0, inbox: 0, done: 0 };
+    todos.forEach(t => {
+      if (t.done) { counts.done++; return; }
+      if (!t.category) counts.inbox++;
+      const state = computeDueState(t.due_date);
+      if (state === "today")   counts.today++;
+      else if (state === "soon")   counts.soon++;
+      else if (state === "overdue") counts.overdue++;
+    });
+    return counts;
+  }, [todos]);
 
   const tabs = [
     { id: "today",   label: "오늘",       count: tabCounts.today   },

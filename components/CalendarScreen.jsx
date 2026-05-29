@@ -82,7 +82,7 @@ function CalendarScreen({ todos = [], mobile, onNavigate, user }) {
           <button
             className="sb-quick-btn"
             style={{ width: "auto", height: 36, padding: "0 14px", marginLeft: 4 }}
-            onClick={() => setSelectedDay(null)}
+            onClick={() => onNavigate && onNavigate("main")}
           >
             <IconPlus style={{ width: 14, height: 14, strokeWidth: 2.5 }} />
             <span>새 할 일</span>

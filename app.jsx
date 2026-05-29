@@ -79,10 +79,17 @@ function App() {
 
   // 초기 세션 확인 + 인증 상태 구독
   React.useEffect(() => {
-    window.supabaseClient.auth.getSession().then(({ data: { session } }) => {
-      setUser(session ? session.user : null);
+    if (!window.supabaseClient) {
+      // CDN 로드 실패 등으로 클라이언트 미초기화 — 로딩만 해제
       setAuthLoading(false);
-    });
+      return;
+    }
+    window.supabaseClient.auth.getSession()
+      .then(({ data: { session } }) => {
+        setUser(session ? session.user : null);
+        setAuthLoading(false);
+      })
+      .catch(() => setAuthLoading(false));
     const { data: { subscription } } = window.supabaseClient.auth.onAuthStateChange(
       (_event, session) => setUser(session ? session.user : null)
     );
